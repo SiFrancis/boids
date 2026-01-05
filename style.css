@@ -24,6 +24,49 @@
   justify-content: center;
 }
 
+/* code from google ai */
+.btn-outline-custom {
+  /* this line is mine though */
+  width: 5em !important;
+  /* Base styles (padding, font, cursor, etc.) */
+  display: inline-block;
+  font-weight: 400;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  padding: 0.375rem 0.75rem;
+  /* ~6px 12px */
+  font-size: 1rem;
+  /* ~16px */
+  line-height: 1.5;
+  border-radius: 0.25rem;
+  /* ~4px, slightly rounded corners */
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+
+  /* Outline specific styles */
+  background-color: transparent;
+  border: 1px solid #007bff;
+  /* Primary blue border color */
+  color: #007bff;
+  /* Primary blue text color */
+}
+
+/* Hover state */
+.btn-outline-custom:hover {
+  color: #fff;
+  /* White text on hover */
+  background-color: #007bff;
+  /* Primary blue background on hover */
+  border-color: #007bff;
+}
+
+/* Focus state for accessibility (optional but recommended) */
+.btn-outline-custom:focus {
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.5);
+  /* Blue glow effect */
+}
+
 .slider_container>p {
   margin: 0 auto;
   text-align: center;

@@ -3,6 +3,21 @@ const ctx = canvas.getContext("2d");
 const heightRatio = 9/16;
 canvas.height = canvas.width * heightRatio;
 
+// run/pause button functionality
+let running = false;
+function run_toggle() {
+  let control_btn = document.getElementById("control_btn");
+  if (control_btn.value == "Paused") {
+    control_btn.value = "Running";
+    running = true;
+    control_btn.innerHTML = "Pause";
+  } else if (control_btn.value == "Running") {
+    control_btn.value = "Paused";
+    running = false;
+    control_btn.innerHTML = "&nbsp;&nbsp;Run&nbsp;&nbsp;";
+  }
+}
+
 // utility function for random positions
 // random integer from a range INCLUDING min and max
 function rand_int(min, max) {
@@ -10,17 +25,45 @@ function rand_int(min, max) {
 }
 
 const boids_num = 50;
-const boids_size = 10;
+const boids_size = 7;
 
-const spawn_margin_percent = 0.15;
+const spawn_margin_percent = 0.1;
 const x_min = canvas.width*spawn_margin_percent;
 const x_max = canvas.width*(1 - spawn_margin_percent);
 const y_min = canvas.height*spawn_margin_percent;
 const y_max = canvas.height*(1 - spawn_margin_percent);
 
-const max_vel = 40;
+const min_vel = 15;
+const max_vel = 20;
 
-let separation_distance = 60;
+// slider values
+let coherence_slider = document.getElementById("coherence_slider");
+let separation_slider = document.getElementById("separation_slider");
+let alignment_slider = document.getElementById("alignment_slider");
+
+// boids values
+let coherence_factor = coherence_slider.value;
+// let separation_distance = separation_slider.value;
+let separation_distance = 40;
+let separation_factor = 5;
+let alignment_factor = alignment_slider.value;
+
+//hidden tunable values
+let turn_factor = 50;
+
+// utility function - map slider values to a certain range
+// from https://douiri.org/blog/range-mapping/
+function rangemap(value, sourceStart, sourceEnd, targetStart, targetEnd) {
+    return (value - sourceStart) / (sourceEnd - sourceStart) * (targetEnd - targetStart) + targetStart
+}
+
+// update values
+coherence_slider.oninput = () => {coherence_factor = coherence_slider.value;}
+separation_slider.oninput = () => {
+  separation_distance = separation_slider.value;
+  separation_factor *= rangemap(separation_slider.value, separation_slider.min, separation_slider.max, 0.001, 0.5);
+}
+alignment_slider.oninput = () => {alignment_factor = alignment_slider.value;}
 
 // because why not
 class Vec2D {
@@ -79,8 +122,11 @@ function create_boids() {
 
 function limit_velocity(boid) {
   let v_magnitude = vec_distance(boid.velocity, new Vec2D());
+  if (v_magnitude < min_vel) {
+    boid.velocity = vec_mult_scalar(vec_div_scalar(boid.velocity, v_magnitude), min_vel);
+  }
   if (v_magnitude > max_vel) {
-    boid.velocity = vec_mult_scalar(vec_div_scalar(boid.velocity, v_magnitude), max_vel)
+    boid.velocity = vec_mult_scalar(vec_div_scalar(boid.velocity, v_magnitude), max_vel);
   }
 }
 
@@ -105,7 +151,7 @@ function rule1(boid) {
   });
   perceived_center = vec_div_scalar(perceived_center, boids_num - 1);
   
-  return vec_div_scalar(vec_subtract(perceived_center, boid.position), 500);
+  return vec_mult_scalar(vec_subtract(perceived_center, boid.position), coherence_factor);
 }
 
 function rule2(boid) {
@@ -118,7 +164,7 @@ function rule2(boid) {
     }
   });
   
-  return vec_mult_scalar(c, 0.1);
+  return vec_mult_scalar(c, separation_factor);
 }
 
 function rule3(boid) {
@@ -130,21 +176,21 @@ function rule3(boid) {
 
   perceived_velocity = vec_div_scalar(perceived_velocity,  boids_num - 1);
 
-  return vec_div_scalar(vec_subtract(perceived_velocity, boid.velocity), 16)
+  return vec_mult_scalar(vec_subtract(perceived_velocity, boid.velocity), alignment_factor)
 }
 
 function rule4(boid) {
   v = new Vec2D();
   if (boid.position.x < x_min) {
-    v.x = 0.2*max_vel;
+    v.x = turn_factor*max_vel;
   } else if (boid.position.x > x_max) {
-    v.x = -0.2*max_vel;
+    v.x = -turn_factor*max_vel;
   }
 
   if (boid.position.y < y_min) {
-    v.y = 0.2*max_vel;
+    v.y = turn_factor*max_vel;
   } else if (boid.position.y > y_max) {
-    v.y = -0.2*max_vel;
+    v.y = -turn_factor*max_vel;
   }
   
   return v;
@@ -172,7 +218,7 @@ function init() {
 
 function draw_loop() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  move_boids();
+  if (running) {move_boids()}
   render();
   window.requestAnimationFrame(draw_loop);
 }
